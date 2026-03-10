@@ -1,468 +1,699 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Next Week Person Queue</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Dashboard - Login Queue</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         * {
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
         }
+        
         html, body {
-            font-family: Arial, sans-serif;
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 10px;
-            background-color: #e8f5e9;
-            -webkit-text-size-adjust: 100%;
-            -moz-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-        }
-        h1 {
-            font-size: 1.5rem;
-            text-align: center;
-            margin-bottom: 15px;
-            color: #2e7d32;
-        }
-        .add-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .add-form input {
-            flex: 1 1 100%;
-            min-width: 120px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-        .add-form .amount-field {
-            flex: 1 1 30%;
-            min-width: 60px;
-        }
-        .add-form button {
-            flex: 1 1 auto;
-            min-width: 80px;
-            padding: 10px 15px;
-            font-size: 14px;
-        }
-        .button-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
-            justify-content: center;
-        }
-        .person-item {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 12px;
-            border: 1px solid #a5d6a7;
-            border-radius: 8px;
-            background: white;
-            gap: 8px;
-        }
-        .person-item.done {
-            background-color: #c8e6c9;
-            text-decoration: line-through;
-        }
-        .checkbox {
-            margin-right: 5px;
-            width: 20px;
-            height: 20px;
-        }
-        .name {
-            flex-grow: 1;
-            min-width: 150px;
-            font-size: 14px;
-            word-break: break-word;
-            cursor: pointer;
-        }
-        .name:hover {
-            text-decoration: underline;
-            color: #2e7d32;
-        }
-        .button-group {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        .delete-btn, .edit-btn {
-            padding: 8px 12px;
-            font-size: 12px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            color: white;
-        }
-        .delete-btn {
-            background-color: #ef5350;
-        }
-        .edit-btn {
-            background-color: #ff9800;
-        }
-        .save-btn {
-            padding: 10px 15px;
-            font-size: 14px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            color: white;
-        }
-        .save-btn.primary {
-            background-color: #4caf50;
-        }
-        .save-btn.secondary {
-            background-color: #2196f3;
-        }
-        .back-btn {
-            background-color: #757575;
-        }
-        .save-btn.roulette {
-            background-color: #E91E63;
-            animation: pulse 2s infinite;
+            min-height: 100vh;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
         
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            overflow-x: hidden;
         }
         
-        .winner-highlight {
-            background-color: #4CAF50 !important;
-            color: white;
-            font-weight: bold;
-            animation: winPulse 0.5s ease-in-out 3;
-        }
-        
-        @keyframes winPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        
-        .roulette-overlay {
+        /* Loading Screen */
+        #loading-screen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 9999;
+            flex-direction: column;
         }
         
-        .roulette-box {
-            background: white;
-            padding: 30px;
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #loading-screen p {
+            color: white;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .bubble {
+            position: absolute;
+            bottom: -100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: rise 15s infinite ease-in;
+        }
+        
+        .bubble:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-duration: 12s; animation-delay: 0s; }
+        .bubble:nth-child(2) { width: 50px; height: 50px; left: 30%; animation-duration: 10s; animation-delay: 2s; }
+        .bubble:nth-child(3) { width: 100px; height: 100px; left: 50%; animation-duration: 14s; animation-delay: 4s; }
+        .bubble:nth-child(4) { width: 60px; height: 60px; left: 70%; animation-duration: 11s; animation-delay: 1s; }
+        .bubble:nth-child(5) { width: 90px; height: 90px; left: 90%; animation-duration: 13s; animation-delay: 3s; }
+        
+        @keyframes rise {
+            0% { bottom: -100px; transform: translateX(0) rotate(0deg); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { bottom: 100vh; transform: translateX(-100px) rotate(360deg); opacity: 0; }
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
-            text-align: center;
-            max-width: 300px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            animation: slideDown 0.5s ease;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         
-        .roulette-name {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #E91E63;
-            margin: 20px 0;
-        }
-        input[type="text"] {
-            padding: 8px;
-            margin-right: 10px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-        }
-        .amount-field {
-            width: 70px;
-            text-align: center;
-        }
-        .gold-field {
-            border-color: #FFD700 !important;
-        }
-        .donation-field {
-            border-color: #4CAF50 !important;
-        }
-        .debt-field {
-            border-color: #ff4444 !important;
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Mobile adjustments */
-        @media (max-width: 480px) {
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sync-status {
+            font-size: 12px;
+            color: #4CAF50;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .sync-status.syncing {
+            color: #FF9800;
+        }
+        
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+        
+        .syncing .sync-dot {
+            background: #FF9800;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .logout-btn {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            min-height: 40px;
+            min-width: 80px;
+        }
+        
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .logout-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Welcome Message */
+        .welcome-banner {
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8));
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .welcome-banner h1 {
+            font-size: 22px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+        
+        .welcome-banner p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        /* Quick Stats */
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        
+        .stat-box {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 15px 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            animation: pulse 2s infinite;
+        }
+        
+        .stat-box:nth-child(1) { animation-delay: 0s; }
+        .stat-box:nth-child(2) { animation-delay: 0.5s; }
+        .stat-box:nth-child(3) { animation-delay: 1s; }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 11px;
+            margin-top: 3px;
+        }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            min-height: 140px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .card:active {
+            transform: scale(0.98);
+        }
+        
+        .card:nth-child(1) { animation: fadeInUp 0.5s ease 0.1s both; }
+        .card:nth-child(2) { animation: fadeInUp 0.5s ease 0.2s both; }
+        .card:nth-child(3) { animation: fadeInUp 0.5s ease 0.3s both; }
+        .card:nth-child(4) { animation: fadeInUp 0.5s ease 0.4s both; }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+        
+        .card:nth-child(1) .card-icon { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .card:nth-child(2) .card-icon { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .card:nth-child(3) .card-icon { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .card:nth-child(4) .card-icon { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+        
+        .card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        
+        .card p {
+            color: #666;
+            font-size: 12px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .card-arrow {
+            position: absolute;
+            right: 15px;
+            bottom: 15px;
+            font-size: 20px;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover .card-arrow {
+            opacity: 1;
+            transform: translateX(5px);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 600px) {
             body {
-                padding: 8px;
-            }
-            h1 {
-                font-size: 1.3rem;
-            }
-            .add-form {
-                padding: 8px;
-            }
-            .add-form input {
-                font-size: 13px;
-                padding: 8px;
-            }
-            .person-item {
                 padding: 10px;
             }
-            .name {
+            
+            .header {
+                padding: 12px 15px;
+                border-radius: 12px;
+            }
+            
+            .logo {
+                font-size: 18px;
+            }
+            
+            .user-avatar {
+                width: 36px;
+                height: 36px;
+                font-size: 14px;
+            }
+            
+            .logout-btn {
+                padding: 8px 14px;
                 font-size: 13px;
-                min-width: 120px;
+                min-height: 36px;
+                min-width: 70px;
             }
-            .delete-btn, .edit-btn {
-                padding: 10px 15px;
-                font-size: 14px;
+            
+            .welcome-banner {
+                padding: 15px;
+                border-radius: 12px;
             }
-            .save-btn {
-                padding: 12px 20px;
-                font-size: 14px;
+            
+            .welcome-banner h1 {
+                font-size: 18px;
+            }
+            
+            .welcome-banner p {
+                font-size: 12px;
+            }
+            
+            .stats-container {
+                gap: 8px;
+            }
+            
+            .stat-box {
+                padding: 12px 8px;
+                border-radius: 10px;
+            }
+            
+            .stat-number {
+                font-size: 22px;
+            }
+            
+            .stat-label {
+                font-size: 10px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .card {
+                padding: 15px;
+                min-height: 120px;
+                border-radius: 12px;
+            }
+            
+            .card-icon {
+                width: 44px;
+                height: 44px;
+                font-size: 20px;
+                border-radius: 10px;
+            }
+            
+            .card h3 {
+                font-size: 15px;
+            }
+            
+            .card p {
+                font-size: 11px;
+            }
+            
+            .card-arrow {
+                font-size: 18px;
             }
         }
         
-        /* Touch-friendly buttons */
-        @media (pointer: coarse) {
-            .delete-btn, .edit-btn, .save-btn {
-                min-height: 44px;
-                min-width: 44px;
+        /* Extra small devices */
+        @media (max-width: 380px) {
+            .header {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .user-info {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .welcome-banner h1 {
+                font-size: 16px;
+            }
+            
+            .stat-number {
+                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
-    <h1>NEXT WEEK QUEUE</h1>
-    <div class="add-form">
-        <input type="text" id="person-name" placeholder="Enter person name">
-        <input type="text" id="gold-amount" class="amount-field gold-field" placeholder="Gold">
-        <input type="text" id="donation-amount" class="amount-field donation-field" placeholder="Donation">
-        <input type="text" id="debt-amount" class="amount-field debt-field" placeholder="Debt">
-        <button onclick="addPerson()">Add Person</button>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <p>Connecting to cloud...</p>
     </div>
-    <div class="button-row">
-        <button class="save-btn primary" onclick="savePersons()">Save</button>
-        <button class="save-btn roulette" onclick="spinRoulette()">🎰 Roulette</button>
-        <button class="save-btn secondary" onclick="exportData()">Export</button>
-        <button class="save-btn back-btn" onclick="window.location.href='person-queue.html'">Back to This Week</button>
-    </div>
-    <div id="person-list"></div>
-
-    <!-- Roulette Overlay -->
-    <div class="roulette-overlay" id="rouletteOverlay">
-        <div class="roulette-box">
-            <h2>🎉 WINNER! 🎉</h2>
-            <div class="roulette-name" id="winnerName">-</div>
-            <button class="save-btn" style="background-color: #4CAF50;" onclick="closeRoulette()">Close</button>
+    
+    <!-- Background Animation -->
+    <div class="bg-animation">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">🚀 Queue Master</div>
+        <div class="sync-status" id="syncStatus">
+            <div class="sync-dot"></div>
+            <span>Synced</span>
         </div>
+        <div class="user-info">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    
+    <!-- Welcome Banner -->
+    <div class="welcome-banner">
+        <h1>Welcome to Your Dashboard!</h1>
+        <p>Manage your queues, track members, and pick winners with ease</p>
     </div>
-
+    
+    <!-- Stats -->
+    <div class="stats-container">
+        <div class="stat-box">
+            <div class="stat-number" id="stat1">0</div>
+            <div class="stat-label">Total Members</div>
+        <div class="stat-box">
+            <div class="stat-number" id="stat2">0</div>
+            <div class="stat-label">This Week</div>
+        <div class="stat-box">
+            <div class="stat-number" id="stat3">0</div>
+            <div class="stat-label">Winners Picked</div>
+    </div>
+    
+    <!-- Dashboard Cards -->
+    <div class="dashboard-grid">
+        <div class="card" onclick="openQueue()">
+            <div class="card-icon">👥</div>
+            <h3>Person Queue</h3>
+            <p>Manage your current week person queue. Add names, track gold, donations, and debts.</p>
+            <div class="card-arrow">→</div>
+        
+        <div class="card" onclick="openNextWeek()">
+            <div class="card-icon">📅</div>
+            <h3>Next Week</h3>
+            <p>Prepare for next week by copying current names or adding new ones.</p>
+            <div class="card-arrow">→</div>
+        
+        <div class="card" onclick="openRoulette()">
+            <div class="card-icon">🎰</div>
+            <h3>Roulette</h3>
+            <p>Spin the wheel to pick random winners from your queue.</p>
+            <div class="card-arrow">→</div>
+        
+        <div class="card" onclick="openSettings()">
+            <div class="card-icon">⚙️</div>
+            <h3>Settings</h3>
+            <p>Configure your preferences and customize the application.</p>
+            <div class="card-arrow">→</div>
+    </div>
+    
     <script>
-        let persons = [];
-
-        // Load from localStorage on page load
-        function loadPersons() {
-            const saved = localStorage.getItem('nextWeekPersonQueue');
-            if (saved) {
-                persons = JSON.parse(saved);
+        // Firebase Configuration - REPLACE WITH YOUR OWN FIREBASE CONFIG
+        // Get this from Firebase Console -> Project Settings -> Your Apps -> Web App
+        const firebaseConfig = {
+            apiKey: "AIzaSyDemo-ReplaceWithYourOwn",
+            authDomain: "your-project.firebaseapp.com",
+            databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+            projectId: "your-project",
+            storageBucket: "your-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
+        
+        // Initialize Firebase
+        let database;
+        let isFirebaseReady = false;
+        
+        // Try to initialize Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            isFirebaseReady = true;
+        } catch(e) {
+            console.log('Firebase not configured - using localStorage fallback');
+            isFirebaseReady = false;
+        }
+        
+        // Get username from localStorage
+        const username = localStorage.getItem('username') || 'User';
+        document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+        
+        // Show/hide loading screen
+        function hideLoading() {
+            const loading = document.getElementById('loading-screen');
+            loading.style.opacity = '0';
+            setTimeout(() => loading.style.display = 'none', 300);
+        }
+        
+        // Update sync status
+        function updateSyncStatus(syncing) {
+            const status = document.getElementById('syncStatus');
+            if (syncing) {
+                status.classList.add('syncing');
+                status.querySelector('span').textContent = 'Syncing...';
+            } else {
+                status.classList.remove('syncing');
+                status.querySelector('span').textContent = 'Synced';
             }
         }
-
-        function savePersons() {
-            localStorage.setItem('nextWeekPersonQueue', JSON.stringify(persons));
-            alert('Saved successfully!');
-        }
-
-        function renderList() {
-            const list = document.getElementById('person-list');
-            list.innerHTML = '';
-            persons.forEach((person, index) => {
-                const item = document.createElement('div');
-                item.className = 'person-item' + (person.done ? ' done' : '');
+        
+        // Load stats from Firebase or localStorage
+        function loadStats() {
+            if (isFirebaseReady && database) {
+                updateSyncStatus(true);
                 
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.className = 'checkbox';
-                checkbox.checked = person.done;
-                checkbox.onchange = () => toggleDone(index);
-                
-                const name = document.createElement('span');
-                name.className = 'name';
-                // Display name with amounts inline
-                let nameText = person.name;
-                if (person.gold) nameText += ' | Gold: ' + person.gold;
-                if (person.donation) nameText += ' | Donation: ' + person.donation;
-                if (person.debt) nameText += ' | Debt: ' + person.debt;
-                name.textContent = nameText;
-                name.style.cursor = 'pointer';
-                name.onclick = () => editPerson(index);
-                
-                const editBtn = document.createElement('button');
-                editBtn.className = 'edit-btn';
-                editBtn.textContent = 'Edit All';
-                editBtn.onclick = () => editAll(index);
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'delete-btn';
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.onclick = () => deletePerson(index);
-                
-                item.appendChild(checkbox);
-                item.appendChild(name);
-                item.appendChild(editBtn);
-                item.appendChild(deleteBtn);
-                list.appendChild(item);
-            });
-        }
-
-        function addPerson() {
-            const nameInput = document.getElementById('person-name');
-            const goldInput = document.getElementById('gold-amount');
-            const donationInput = document.getElementById('donation-amount');
-            const debtInput = document.getElementById('debt-amount');
-            
-            const name = nameInput.value.trim();
-            if (name) {
-                persons.push({ 
-                    name: name, 
-                    gold: goldInput.value.trim(),
-                    donation: donationInput.value.trim(),
-                    debt: debtInput.value.trim(),
-                    done: false 
-                });
-                nameInput.value = '';
-                goldInput.value = '';
-                donationInput.value = '';
-                debtInput.value = '';
-                renderList();
-            }
-        }
-
-        function toggleDone(index) {
-            persons[index].done = !persons[index].done;
-            renderList();
-        }
-
-        function deletePerson(index) {
-            persons.splice(index, 1);
-            renderList();
-        }
-
-        function editPerson(index) {
-            const person = persons[index];
-            const newName = prompt('Edit Name:', person.name);
-            if (newName !== null) {
-                persons[index].name = newName.trim();
-                renderList();
-            }
-        }
-
-        function editAmount(index, field) {
-            const person = persons[index];
-            const currentValue = person[field] || '';
-            const label = field.charAt(0).toUpperCase() + field.slice(1);
-            const newValue = prompt('Edit ' + label + ':', currentValue);
-            if (newValue !== null) {
-                persons[index][field] = newValue.trim();
-                renderList();
-            }
-        }
-
-        function editAll(index) {
-            const person = persons[index];
-            const newName = prompt('Edit Name:', person.name);
-            const newGold = prompt('Edit Gold:', person.gold || '');
-            const newDonation = prompt('Edit Donation:', person.donation || '');
-            const newDebt = prompt('Edit Debt:', person.debt || '');
-            
-            if (newName !== null) persons[index].name = newName.trim();
-            if (newGold !== null) persons[index].gold = newGold.trim();
-            if (newDonation !== null) persons[index].donation = newDonation.trim();
-            if (newDebt !== null) persons[index].debt = newDebt.trim();
-            renderList();
-        }
-
-        function exportData() {
-            const dataStr = JSON.stringify(persons);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'nextweek-queue-data.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        // Load saved data and initial render
-        loadPersons();
-        renderList();
-
-        // Roulette function to pick a random winner
-        function spinRoulette() {
-            if (persons.length === 0) {
-                alert('No persons in queue to pick from!');
-                return;
-            }
-            
-            // Filter only not done persons for roulette
-            const availablePersons = persons.filter(p => !p.done);
-            
-            if (availablePersons.length === 0) {
-                alert('All persons are marked as done! No one available to win.');
-                return;
-            }
-            
-            const overlay = document.getElementById('rouletteOverlay');
-            const winnerNameEl = document.getElementById('winnerName');
-            
-            overlay.style.display = 'flex';
-            
-            // Animate through names
-            let counter = 0;
-            const totalSpins = 20;
-            const interval = setInterval(() => {
-                const randomIndex = Math.floor(Math.random() * availablePersons.length);
-                winnerNameEl.textContent = availablePersons[randomIndex].name;
-                counter++;
-                
-                if (counter >= totalSpins) {
-                    clearInterval(interval);
-                    // Select final winner
-                    const finalIndex = Math.floor(Math.random() * availablePersons.length);
-                    const winner = availablePersons[finalIndex];
-                    winnerNameEl.textContent = winner.name;
+                // Load from Firebase
+                database.ref('queues/current').once('value', (snapshot) => {
+                    const currentData = snapshot.val() || {};
+                    const currentLength = Object.keys(currentData).length;
                     
-                    // Highlight winner in the list and mark as done
-                    const winnerIndex = persons.findIndex(p => p.name === winner.name);
-                    if (winnerIndex !== -1) {
-                        persons[winnerIndex].done = true;
-                        renderList();
+                    database.ref('queues/next').once('value', (snapshot2) => {
+                        const nextData = snapshot2.val() || {};
+                        const nextLength = Object.keys(nextData).length;
                         
-                        const listItems = document.querySelectorAll('.person-item');
-                        if (listItems[winnerIndex]) {
-                            listItems[winnerIndex].classList.add('winner-highlight');
-                        }
-                    }
+                        database.ref('stats/winners').once('value', (snapshot3) => {
+                            const winners = snapshot3.val() || 0;
+                            
+                            animateValue('stat1', 0, currentLength + nextLength, 1000);
+                            animateValue('stat2', 0, currentLength, 1000);
+                            animateValue('stat3', 0, winners, 1000);
+                            updateSyncStatus(false);
+                        });
+                    });
+                });
+            } else {
+                // Fallback to localStorage
+                const currentQueue = localStorage.getItem('personQueue');
+                const currentMembers = currentQueue ? JSON.parse(currentQueue).length : 0;
+                
+                const nextQueue = localStorage.getItem('nextWeekPersonQueue');
+                const nextMembers = nextQueue ? JSON.parse(nextQueue).length : 0;
+                
+                const winners = localStorage.getItem('winnersPicked') || '0';
+                
+                animateValue('stat1', 0, currentMembers + nextMembers, 1000);
+                animateValue('stat2', 0, currentMembers, 1000);
+                animateValue('stat3', 0, parseInt(winners), 1000);
+            }
+        }
+        
+        // Animate stats on load
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
                 }
-            }, 100);
+            };
+            window.requestAnimationFrame(step);
         }
-
-        // Close roulette overlay
-        function closeRoulette() {
-            document.getElementById('rouletteOverlay').style.display = 'none';
-            // Remove winner highlight after closing
-            setTimeout(() => {
-                const highlighted = document.querySelectorAll('.winner-highlight');
-                highlighted.forEach(el => el.classList.remove('winner-highlight'));
-            }, 500);
+        
+        // Logout - redirect to login page
+        function logout() {
+            localStorage.removeItem('loggedIn');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
         }
+        
+        function openQueue() {
+            window.location.href = 'unified-queue.html';
+        }
+        
+        function openNextWeek() {
+            window.location.href = 'unified-queue.html';
+        }
+        
+        function openRoulette() {
+            window.location.href = 'unified-queue.html';
+        }
+        
+        function openSettings() {
+            alert('Settings page coming soon!');
+        }
+        
+        // Load stats on page load
+        setTimeout(() => {
+            loadStats();
+            hideLoading();
+        }, 500);
+        
+        // Refresh stats when page becomes visible
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                loadStats();
+            }
+        });
     </script>
 </body>
 </html>
-
